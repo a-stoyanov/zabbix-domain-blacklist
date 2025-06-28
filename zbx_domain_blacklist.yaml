@@ -1,0 +1,144 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    - uuid: 3c43c215805742ad8fc328868b7a17b4
+      template: 'Domain Blacklist'
+      name: 'Domain Blacklist'
+      description: |
+        Template version: 1.0.0
+        Downloaded from: https://github.com/a-stoyanov/zabbix-domain-blacklist
+      vendor:
+        name: github.com/a-stoyanov
+        version: 6.4-0
+      groups:
+        - name: Templates
+      items:
+        - uuid: 39e95bc87a254230a44fbeb74eae9165
+          name: 'Blacklist Names'
+          type: DEPENDENT
+          key: blacklist_count.blacklist_names
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.blacklist_names
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: 'check_blacklist.sh["-d",{HOST.HOST},"-m",{$MXT_API_KEY},"-x",{$HETRIX_API_KEY},"-w",{$RBL_COUNT_WARN},"-c",{$RBL_COUNT_CRIT}]'
+        - uuid: 3c5b657b78c644dcb5bf975a0e8bbb18
+          name: 'Blacklist Count'
+          type: DEPENDENT
+          key: check_blacklist.blacklist_count
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.blacklist_count
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: 'check_blacklist.sh["-d",{HOST.HOST},"-m",{$MXT_API_KEY},"-x",{$HETRIX_API_KEY},"-w",{$RBL_COUNT_WARN},"-c",{$RBL_COUNT_CRIT}]'
+        - uuid: eb14330fcdb94feca04afba439bdb5fc
+          name: Message
+          type: DEPENDENT
+          key: check_blacklist.message
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.message
+          master_item:
+            key: 'check_blacklist.sh["-d",{HOST.HOST},"-m",{$MXT_API_KEY},"-x",{$HETRIX_API_KEY},"-w",{$RBL_COUNT_WARN},"-c",{$RBL_COUNT_CRIT}]'
+        - uuid: 53e713eeafc34c7ebbf121f0c3b65d5d
+          name: 'Check Blacklist'
+          type: EXTERNAL
+          key: 'check_blacklist.sh["-d",{HOST.HOST},"-m",{$MXT_API_KEY},"-x",{$HETRIX_API_KEY},"-w",{$RBL_COUNT_WARN},"-c",{$RBL_COUNT_CRIT}]'
+          delay: 1h
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+        - uuid: f33b1e5b1e524c6c8674ffa0a204ecb5
+          name: State
+          type: DEPENDENT
+          key: check_blacklist.state
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.state
+          master_item:
+            key: 'check_blacklist.sh["-d",{HOST.HOST},"-m",{$MXT_API_KEY},"-x",{$HETRIX_API_KEY},"-w",{$RBL_COUNT_WARN},"-c",{$RBL_COUNT_CRIT}]'
+      tags:
+        - tag: domain
+          value: blacklist
+        - tag: domain
+          value: reputation
+      macros:
+        - macro: '{$HETRIX_API_KEY}'
+          description: 'Specify a valid HetrixTools API key to use'
+        - macro: '{$MXT_API_KEY}'
+          description: 'Specify a valid MXToolbox API key to use'
+        - macro: '{$RBL_COUNT_CRIT}'
+          value: '2'
+          description: 'Threshold value for number of blacklists the domain appears on as listed before triggering a HIGH alert'
+        - macro: '{$RBL_COUNT_WARN}'
+          value: '1'
+          description: 'Threshold value for number of blacklists the domain appears on as listed before triggering a WARNING alert'
+  triggers:
+    - uuid: 9b0e32fc7da04875b5758d5a1cd7a97e
+      expression: |
+        last(/Domain Blacklist/check_blacklist.state)="UNKNOWN"
+        and
+        last(/Domain Blacklist/check_blacklist.message)<>0
+      name: 'Domain Blacklist: {HOST.HOST} - {ITEM.LASTVALUE2}'
+      description: 'Raise alert in case script is unable to determine the blacklist status for the domain (state = unknown)'
+      tags:
+        - tag: domain
+          value: status
+    - uuid: 5810d2f50fb44bf6bbbdf973cda022da
+      expression: |
+        last(/Domain Blacklist/check_blacklist.state)="CRITICAL"
+        and
+        last(/Domain Blacklist/check_blacklist.blacklist_count)>={$RBL_COUNT_CRIT}
+        and
+        last(/Domain Blacklist/blacklist_count.blacklist_names)<>0
+      name: 'Domain Blacklist: {HOST.HOST} has been blacklisted'
+      opdata: '{ITEM.LASTVALUE2} time(s) on RBL(s): [{ITEM.LASTVALUE3}]'
+      priority: HIGH
+      description: 'Raise alert if domain has been found listed on ({$RBL_COUNT_CRIT}) or more RBLs.'
+      tags:
+        - tag: domain
+          value: blacklist
+    - uuid: db02b6841cf04398a26fd3579ea7df5e
+      expression: |
+        last(/Domain Blacklist/check_blacklist.state)="WARNING"
+        and
+        last(/Domain Blacklist/check_blacklist.blacklist_count)>={$RBL_COUNT_WARN}
+        and
+        last(/Domain Blacklist/blacklist_count.blacklist_names)<>0
+      name: 'Domain Blacklist: {HOST.HOST} has been blacklisted'
+      opdata: '{ITEM.LASTVALUE2} time(s) on RBL(s): [{ITEM.LASTVALUE3}]'
+      priority: WARNING
+      description: 'Raise alert if domain has been found listed on ({$RBL_COUNT_WARN}) or more RBLs.'
+      dependencies:
+        - name: 'Domain Blacklist: {HOST.HOST} has been blacklisted'
+          expression: |
+            last(/Domain Blacklist/check_blacklist.state)="CRITICAL"
+            and
+            last(/Domain Blacklist/check_blacklist.blacklist_count)>={$RBL_COUNT_CRIT}
+            and
+            last(/Domain Blacklist/blacklist_count.blacklist_names)<>0
+      tags:
+        - tag: domain
+          value: blacklist
