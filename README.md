@@ -1,6 +1,6 @@
 # zabbix-domain-blacklist
 
-This repository provides a Zabbix template and script for monitoring whether a specified domain is listed on Real-time Blackhole Lists (RBLs) using MXToolbox and/or HetrixTools APIs. The solution is designed for Zabbix integration and offers alerts based on customizable warning and critical thresholds.
+This repository provides a Zabbix template and script to check if a specified SMTP domain is listed on Real-time Blackhole Lists (RBLs) using MXToolbox and/or HetrixTools APIs. The solution is designed for Zabbix integration and offers alerts based on customizable warning and critical thresholds.
 
 </br>
 
@@ -9,7 +9,7 @@ This repository provides a Zabbix template and script for monitoring whether a s
 - **Multi-API Support**: Queries MXToolbox and/or HetrixTools APIs to check domain blacklist status.
 - **Customizable Thresholds**: Configurable warning and critical thresholds for the number of blacklists a domain appears on as listed.
 - **JSON Output**: Provides structured JSON output with state (OK, WARNING, CRITICAL, UNKNOWN), blacklist count, blacklist names, and detailed messages.
-- **Deduplication**: Normalizes and deduplicates blacklist names from both APIs for consistent reporting (when both APIs are checked)
+- **Deduplication**: Normalizes and deduplicates blacklist names from both APIs for consistent reporting.
 - **Error Handling**: Handles API errors, rate limits, and missing dependencies, reporting issues in Zabbix-compatible format.
 
 ## Requirements
@@ -21,15 +21,15 @@ This repository provides a Zabbix template and script for monitoring whether a s
   - `jq`: For JSON parsing.
   - `xargs`: For trimming whitespace in blacklist names.
 - **API Keys** (at least one required):
-  - MXToolbox API key (optional, for MXToolbox checks; register your own [MXToolbox account](https://mxtoolbox.com/) to get a key).
-  - HetrixTools API key (optional, for HetrixTools checks; register your own [HetrixTools account](https://hetrixtools.com) to get a key).
+  - MXToolbox API key (optional; register your own [MXToolbox account](https://mxtoolbox.com/) to get a key).
+  - HetrixTools API key (optional; register your own [HetrixTools account](https://hetrixtools.com) to get a key).
 - **Permissions**: Script must be executable (`chmod +x check_blacklist.sh`) and accessible by the Zabbix agent or server.
 
 ## Tested on
 - **OS**: RHEL/Rocky (bash) and Debian/Ubuntu (dash)
 - **Zabbix Server**: 6.4
 
-## Installation (Zabbix server)
+## Installation (Zabbix Server)
 
 ### Install Script Dependencies
 
@@ -78,7 +78,7 @@ The script can be run manually for testing:
 ### Options
 
 - `-d <domain>`: Required. The domain to check (e.g., `example.com`).
-- `-m <mxtoolbox_api_key>`: Optional. MXToolbox API key for blacklist26c6 blacklist lookup.
+- `-m <mxtoolbox_api_key>`: Optional. MXToolbox API key for blacklist lookup.
 - `-x <hetrix_api_key>`: Optional. HetrixTools API key for blacklist lookup.
 - `-w <warning_count>`: Optional. Number of blacklists to trigger WARNING state (default: 1).
 - `-c <critical_count>`: Optional. Number of blacklists to trigger CRITICAL state (default: 2).
